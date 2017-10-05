@@ -9,7 +9,9 @@
 
 date_default_timezone_set("Asia/Tokyo");
 session_start();
+require_once("common.php");
 require_once("ndlsearch.php");
+$data_file_path = 'data/bibliography.csv';
 
 if($_SERVER["REQUEST_METHOD"] == "GET"){
   if (isset($_GET['command'])&&isset($_GET['barcord'])&&($_GET['command']=="addISBN")){
@@ -53,69 +55,43 @@ $isSubmitEnabled = isset($_SESSION["isbn"])&&isset($_SESSION["price"]);
     <meta charset="utf8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     
-    <title>pick a book</title>
+    <title><?= TITLE ?></title>
   
-	  <!-- JQM 1.3 start -->
-  	<link rel="stylesheet" href="https://code.jquery.com/mobile/1.3.1/jquery.mobile-1.3.1.min.css" />
-  	<script src="https://code.jquery.com/jquery-1.9.1.min.js"></script>
-  	<script src="https://code.jquery.com/mobile/1.3.1/jquery.mobile-1.3.1.min.js"></script>
-  	<!--  JQM 1.3 end -->
+	  <?php require("common_script.php"); ?>
 
-		<SCRIPT LANGUAGE="JavaScript">
-    /*
-      function addBarCord() {
-        // launch pic2shop and tell it to open Google Products with scan result
-	      window.location="pic2shop://scan?callback=http%3A//klingsor.uedasoft.com/tools/171002/index.php%3Fcommand%3Dadd%26barcord%3DEAN";
-      }
-      function addQRCord() {
-        // launch pic2shop and tell it to open Google Products with scan result
-	      window.location="pic2shop://scan?callback=http%3A//klingsor.uedasoft.com/tools/171002/index.php%3Fcommand%3Dadd%26barcord%3DQR";
-      }
-    */
-      function readISBNCord() {
-        // launch pic2shop and tell it to open Google Products with scan result
-        window.location="pic2shop://scan?callback=http%3A//klingsor.uedasoft.com/tools/171002/index.php%3Fcommand%3DaddISBN%26barcord%3DEAN";
-      }
-      function readJANCord() {
-        // launch pic2shop and tell it to open Google Products with scan result
-        window.location="pic2shop://scan?callback=http%3A//klingsor.uedasoft.com/tools/171002/index.php%3Fcommand%3DaddJAN%26barcord%3DEAN";
-      }
-    </SCRIPT>
   </head>
   <body>
 
     <div data-role="page">
     
       <div data-role="header" data-position="fixed" data-disable-page-zoom="false">
-        <h1>Pick a book</h1>
+        <a href="download.php" data-transition="fade" data-ajax="false"><i class="fa fa-download" aria-hidden="true"></i></a>
+        <h1 style="font-family: 'Parisienne', cursive; text-shadow: 4px 4px 4px #aaa;"><?= TITLE ?></h1>
+        <a href="add.php" data-transition="fade" data-ajax="false"><i class="fa fa-plus-circle" aria-hidden="true"></i></a>
       </div> <!-- header -->
 
       <div data-role="content">
+<?php
+        if (file_exists($data_file_path)){
+          $splFileObject = new SplFileObject($data_file_path);
+          $splFileObject->setFlags(SplFileObject::READ_CSV);
+  //        $csv = array();
 
-        <FORM>
-          <INPUT TYPE=BUTTON OnClick="readISBNCord();" VALUE="ISBNコードのスキャン">
-        </FORM>
-        <FORM>
-          <INPUT TYPE=BUTTON OnClick="readJANCord();" VALUE="JANコードのスキャン">
-        </FORM>
-        <form action="<?= $_SERVER['SCRIPT_NAME']; ?>" method="post" data-ajax="false">
-          <input type="hidden" name="isbn"      id="isbn"       value="<?= isset($_SESSION["isbn"])?$_SESSION["isbn"]:"" ?>" />
-          <input type="hidden" name="titel"     id="title"      value="<?= isset($_SESSION["title"])?$_SESSION["title"]:"" ?>" />
-          <input type="hidden" name="creator"   id="creator"    value="<?= isset($_SESSION["creator"])?$_SESSION["creator"]:"" ?>" />
-          <input type="hidden" name="publisher" id="publisher"  value="<?= isset($_SESSION["publisher"])?$_SESSION["publisher"]:"" ?>" />
-          <input type="hidden" name="price"     id="price"      value="<?= isset($_SESSION["price"])?$_SESSION["price"]:"" ?>" />
-            ISBN: <?= isset($_SESSION["isbn"])?$_SESSION["isbn"]:"" ?><br>
-            書名: <?= isset($_SESSION["title"])?$_SESSION["title"]:"" ?><br>
-            価格: <?= isset($_SESSION["price"])?$_SESSION["price"]:"" ?><br>
-          <input type="text"    <?= $isSubmitEnabled? '' : 'disabled="disabled"' ?> name="memo" id="memo" placeholder="メモ"/>
-          <input type="submit"  <?= $isSubmitEnabled? '' : 'disabled="disabled"' ?> value="登録" />
-        </form>
-    <!--		<FORM>
-          <INPUT TYPE=BUTTON OnClick="addBarCord();" VALUE="Scan Barcode">
-        </FORM>
-    		<FORM>
-          <INPUT TYPE=BUTTON OnClick="addQRCord();" VALUE="Scan QRcode">
-        </FORM> -->
+          foreach ($splFileObject as $line ){
+            $csv[] = $line;
+  //           array_push ($csv[], $line);
+          }
+          $csv = array_reverse($csv);
+          foreach ($csv as $line){
+            if (1 != count($line)){
+              echo "<b>登録日: </b>".$line[0]."<br>";
+              echo "<b>タイトル: </b>".$line[2]."<br>";
+              echo "<b>価格: </b>".$line[5]."<br>";
+              echo "<b>メモ: </b>".$line[6]."<br><hr>";
+            }
+          }
+        }
+?>
       </div> <!-- content -->
 
       <div data-role="footer" data-position="fixed" data-disable-page-zoom="false">
