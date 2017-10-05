@@ -13,40 +13,6 @@ require_once("common.php");
 require_once("ndlsearch.php");
 $data_file_path = 'data/bibliography.csv';
 
-if($_SERVER["REQUEST_METHOD"] == "GET"){
-  if (isset($_GET['command'])&&isset($_GET['barcord'])&&($_GET['command']=="addISBN")){
-    // read bibliographicals from NDL and put it on the FORM.
-    $ndl = new NDLsearch($_GET['barcord']);
-    $_SESSION["isbn"]       = $_GET['barcord'];
-    $_SESSION["title"]      = (string)$ndl->title();
-    $_SESSION["creator"]    = (string)$ndl->creator();
-    $_SESSION["publisher"]  = (string)$ndl->publisher();
-  }
-  if (isset($_GET['command'])&&isset($_GET['barcord'])&&($_GET['command']=="addJAN")){
-    // read the price and put it on the FORM.
-    $_SESSION["price"] = intval(substr($_GET['barcord'],7,5))."円";
-  }
-}elseif($_SERVER["REQUEST_METHOD"] == "POST"){
-  $date = new DateTime();
-
-  $list = array(
-    $date->format('Y-m-d H:i:s'),$_POST["isbn"],$_POST["title"], $_POST["creator"], $_POST["publisher"], $_POST["price"], $_POST["memo"]
-  );
-  $fp = fopen('data/bibliography.csv','a');
-  rewind ($fp);
-  fputcsv($fp,$list);
-  fclose($fp);
-  unset($_SESSION["isbn"]);
-  unset($_SESSION["title"]);
-  unset($_SESSION["creator"]);
-  unset($_SESSION["publisher"]);
-  unset($_SESSION["price"]);
-}else{
-
-}
-
-$isSubmitEnabled = isset($_SESSION["isbn"])&&isset($_SESSION["price"]);
-
 ?>
 
 <!DOCTYPE html>
