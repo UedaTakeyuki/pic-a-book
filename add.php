@@ -11,19 +11,31 @@ date_default_timezone_set("Asia/Tokyo");
 session_start();
 require_once("common.php");
 require_once("ndlsearch.php");
+$error_str = null;
 
 if($_SERVER["REQUEST_METHOD"] == "GET"){
   if (isset($_GET['command'])&&isset($_GET['barcord'])&&($_GET['command']=="addISBN")){
     // read bibliographicals from NDL and put it on the FORM.
-    $ndl = new NDLsearch($_GET['barcord']);
-    $_SESSION["isbn"]       = $_GET['barcord'];
-    $_SESSION["title"]      = (string)$ndl->title();
-    $_SESSION["creator"]    = (string)$ndl->creator();
-    $_SESSION["publisher"]  = (string)$ndl->publisher();
+    if (mb_strlen($_GET['barcord']) == 10 
+        || (mb_strlen($_GET['barcord']) == 13
+            && (substr($_GET['barcord'],0,3) == "978" || substr($_GET['barcord'],0,3) == "979"))){
+      $ndl = new NDLsearch($_GET['barcord']);
+      $_SESSION["isbn"]       = $_GET['barcord'];
+      $_SESSION["title"]      = (string)$ndl->title();
+      $_SESSION["creator"]    = (string)$ndl->creator();
+      $_SESSION["publisher"]  = (string)$ndl->publisher();
+    } else {
+      $error_str = "ISBN コードではありません";
+    }
   }
   if (isset($_GET['command'])&&isset($_GET['barcord'])&&($_GET['command']=="addJAN")){
     // read the price and put it on the FORM.
-    $_SESSION["price"] = intval(substr($_GET['barcord'],7,5))."円";
+    if (mb_strlen($_GET['barcord']) == 13
+        && (substr($_GET['barcord'],0,3) == "191" || substr($_GET['barcord'],0,3) == "192")){
+      $_SESSION["price"] = intval(substr($_GET['barcord'],7,5))."円";
+    } else {
+      $error_str = "書籍JAN コードではありません";
+    }
   }
 }elseif($_SERVER["REQUEST_METHOD"] == "POST"){
   $date = new DateTime();
@@ -85,7 +97,7 @@ $isSubmitEnabled = isset($_SESSION["isbn"])&&isset($_SESSION["price"]);
     <div data-role="page">
       <div data-role="header" data-position="fixed" data-disable-page-zoom="false">
         <h1><?= TITLE ?></h1>
-        <a href="" data-rel="back"><i class="fa fa-arrow-left" aria-hidden="true"></i></a>
+        <a href="index.php"><i class="fa fa-arrow-left" aria-hidden="true"></i></a>
       </div> <!-- header -->
 
       <div data-role="content">
@@ -96,6 +108,7 @@ $isSubmitEnabled = isset($_SESSION["isbn"])&&isset($_SESSION["price"]);
         <FORM>
           <INPUT TYPE=BUTTON OnClick="readJANCord();" VALUE="JANコードのスキャン">
         </FORM>
+        <p style="color: orangered; font-weight: 700"><?= is_null($error_str)?'':$error_str ?></p>
         <form action="<?= $_SERVER['SCRIPT_NAME']; ?>" method="post" data-ajax="false">
           <input type="hidden" name="isbn"      id="isbn"       value="<?= isset($_SESSION["isbn"])?$_SESSION["isbn"]:"" ?>" />
           <input type="hidden" name="title"     id="title"      value="<?= isset($_SESSION["title"])?$_SESSION["title"]:"" ?>" />
