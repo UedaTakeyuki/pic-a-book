@@ -1,4 +1,5 @@
 <?php
+session_start();
 /**
  * Pic a book information from ISBN and JAN code for purchase later.
  * 
@@ -8,7 +9,6 @@
  */
 
 date_default_timezone_set("Asia/Tokyo");
-session_start();
 require_once("common.php");
 require_once("ndlsearch.php");
 $data_file_path = 'data/bibliography.csv';
@@ -48,8 +48,10 @@ $data_file_path = 'data/bibliography.csv';
   //           array_push ($csv[], $line);
           }
           $csv = array_reverse($csv);
+          $linecount = 0;
           foreach ($csv as $line){
             if (1 != count($line)){
+              echo '<a href="delete.php?line='.(count($csv) - ++$linecount).'" data-role="button" data-mini="true" data-inline="true" onClick="javascript:return confirm(\'本当に削除しますか？\')" data-ajax="false">削除</a>';
               echo "<b>登録日: </b>".$line[0]."<br>";
               echo "<b>タイトル: </b>".$line[2]."<br>";
               echo "<b>価格: </b>".$line[5]."<br>";

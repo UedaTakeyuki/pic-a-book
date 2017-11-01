@@ -1,4 +1,5 @@
 <?php
+session_start();
 /**
  * Pic a book information from ISBN and JAN code for purchase later.
  * 
@@ -8,7 +9,6 @@
  */
 
 date_default_timezone_set("Asia/Tokyo");
-session_start();
 require_once("common.php");
 require_once("ndlsearch.php");
 $error_str = null;
@@ -53,6 +53,11 @@ if($_SERVER["REQUEST_METHOD"] == "GET"){
   unset($_SESSION["publisher"]);
   unset($_SESSION["price"]);
   header('Location: index.php');
+
+  // リロード時の二重送信を防ぐために、自分自身に一度 GET を発行する（と、リロードされても POST がでない）
+  error_log('['.basename(__FILE__).':'.__LINE__.']'.' *** RELOAD ***');    
+  header("Location: " . "index.php");
+
 }else{
 
 }
@@ -90,6 +95,16 @@ $isSubmitEnabled = isset($_SESSION["isbn"])&&isset($_SESSION["price"]);
         // launch pic2shop and tell it to open Google Products with scan result
         window.location="pic2shop://scan?callback=http%3A//klingsor.uedasoft.com/tools/171002/add.php%3Fcommand%3DaddJAN%26barcord%3DEAN";
       }
+      function block_duplex(submit){
+        if(submit.disabled){
+          //ボタンがdisabledならsubmitしない
+          return false;
+        }else{
+          //ボタンがdisabledでなければ、ボタンをdisabledにした上でsubmitする
+          submit.disabled = true;
+          return true;
+        }
+      }
     </SCRIPT>
   </head>
   <body>
@@ -109,7 +124,7 @@ $isSubmitEnabled = isset($_SESSION["isbn"])&&isset($_SESSION["price"]);
           <INPUT TYPE=BUTTON OnClick="readJANCord();" VALUE="JANコードのスキャン">
         </FORM>
         <p style="color: orangered; font-weight: 700"><?= is_null($error_str)?'':$error_str ?></p>
-        <form action="<?= $_SERVER['SCRIPT_NAME']; ?>" method="post" data-ajax="false">
+        <form action="<?= $_SERVER['SCRIPT_NAME']; ?>" method="post" data-ajax="false" onsubmit="return block_duplex(this.submit)">
           <input type="hidden" name="isbn"      id="isbn"       value="<?= isset($_SESSION["isbn"])?$_SESSION["isbn"]:"" ?>" />
           <input type="hidden" name="title"     id="title"      value="<?= isset($_SESSION["title"])?$_SESSION["title"]:"" ?>" />
           <input type="hidden" name="creator"   id="creator"    value="<?= isset($_SESSION["creator"])?$_SESSION["creator"]:"" ?>" />
